@@ -1,3 +1,9 @@
+/*
+    Author: Pavel Abramov
+    Examples taken from golang docs and Mozilla's
+    nodejs clientside session library
+*/
+
 package sessioncookie
 
 import (
@@ -13,7 +19,7 @@ import (
     "encoding/base64"
 )
 
-// TODO: Fewer panics, more errors
+
 func concatValue(hash_mac string, timestamp string, data string, sep string) string {
     if sep == "" {
         sep = "."
@@ -21,7 +27,8 @@ func concatValue(hash_mac string, timestamp string, data string, sep string) str
     return hash_mac + sep+ timestamp + sep + data
 }
 
-func encryptData(secret_key []byte, data []byte) []byte {
+
+func encryptData(secret_key []byte, data []byte) ([]byte, error)  {
     // add padding to block size
     remainder := len(data) % aes.BlockSize
     if remainder != 0 {
@@ -35,7 +42,7 @@ func encryptData(secret_key []byte, data []byte) []byte {
 
     block, err := aes.NewCipher(secret_key)
     if err != nil {
-        panic(err)
+        return []byte{}, err
     }
 
     // empty array of size block + data
@@ -47,32 +54,32 @@ func encryptData(secret_key []byte, data []byte) []byte {
     // reads from rand.Reader global singleton PRNG into iv
     _, err = io.ReadFull(rand.Reader, iv)
     if err != nil {
-        panic(err)
+        return []byte{}, err
     }
 
     // data is encrypted
     mode := cipher.NewCBCEncrypter(block, iv)
     mode.CryptBlocks(ciphertext[aes.BlockSize:], data)
 
-    return ciphertext
+    return ciphertext, nil
 }
 
 
-func decryptData(secret_key []byte, encrypted_data []byte) string {
+func decryptData(secret_key []byte, encrypted_data []byte) (string, error) {
     block, err := aes.NewCipher(secret_key)
     if err != nil {
-        panic(err)
+        return "", err
     }
 
     if len(encrypted_data) < aes.BlockSize {
-        panic("text too short")
+        return "", errors.New("encrypted data is less than BlockSize")
     }
 
     iv := encrypted_data[:aes.BlockSize]
     data := encrypted_data[aes.BlockSize:]
 
     if len(data) % aes.BlockSize != 0 {
-        panic("data is not a multiple of block size")
+        return "", errors.New("encrypted data is not a multiple of block size")
     }
 
     mode := cipher.NewCBCDecrypter(block, iv)
@@ -82,7 +89,7 @@ func decryptData(secret_key []byte, encrypted_data []byte) string {
     // remove padding
     trimmed_data := strings.TrimRight(string(data), "=")
 
-    return trimmed_data
+    return trimmed_data, nil
 }
 
 
@@ -98,14 +105,18 @@ func generateHMAC(secret_key []byte, timestamp []byte, encrypted_data []byte) []
 }
 
 
-func EncryptCookieValue(secret_key []byte, plaintext_data []byte, sep string) string {
+func EncryptCookieValue(secret_key []byte, plaintext_data []byte, sep string) (string, error) {
     // generate timestamp
     now := time.Now()
     timestamp := []byte(now.Format(time.UnixDate))
     encoded_timestamp := base64.URLEncoding.EncodeToString(timestamp)
 
     // generate data blob
-    encrypted_data := encryptData(secret_key, plaintext_data)
+    encrypted_data, err := encryptData(secret_key, plaintext_data)
+    if err != nil {
+        return "", err
+    }
+
     encoded_data := base64.URLEncoding.EncodeToString(encrypted_data)
 
     // generate data blob
@@ -114,7 +125,7 @@ func EncryptCookieValue(secret_key []byte, plaintext_data []byte, sep string) st
     encoded_hash_mac := base64.URLEncoding.EncodeToString(hash_mac)
 
     // return encoded values
-    return concatValue(encoded_hash_mac, encoded_timestamp, encoded_data, sep)
+    return concatValue(encoded_hash_mac, encoded_timestamp, encoded_data, sep), nil
 }
 
 
@@ -153,7 +164,10 @@ func DecryptCookieValue(secret_key []byte, cookie_value string, sep string) (str
     }
 
     // hmac mathces, now decrypt data.
-    data := decryptData(secret_key, encrypted_data)
+    data, err := decryptData(secret_key, encrypted_data)
+    if err != nil {
+        return "", err
+    }
 
     return string(data), nil
 }

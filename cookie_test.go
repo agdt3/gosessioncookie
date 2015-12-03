@@ -32,7 +32,7 @@ func TestEncryptionDecryption (t *testing.T) {
     secret_key, value, _ := setUp()
     plaintext, _ := json.Marshal(value)
 
-    encrypted_value := EncryptCookieValue(secret_key, plaintext, sep)
+    encrypted_value, _ := EncryptCookieValue(secret_key, plaintext, sep)
     returned_value, _ := DecryptCookieValue(secret_key, encrypted_value, sep)
 
     if string(plaintext) != returned_value {
@@ -45,8 +45,8 @@ func TestEncryptDecryptData (t *testing.T) {
     secret_key, value, _ := setUp()
     plaintext, _ := json.Marshal(value)
 
-    encrypted_data := encryptData(secret_key, plaintext)
-    decrypted_data := decryptData(secret_key, encrypted_data)
+    encrypted_data, _ := encryptData(secret_key, plaintext)
+    decrypted_data, _ := decryptData(secret_key, encrypted_data)
 
     if string(encrypted_data) == decrypted_data {
         t.Error("encrypted data should not match decrypted data")
@@ -62,8 +62,8 @@ func TestRepeatedEncryption (t *testing.T) {
     secret_key, value, _ := setUp()
     plaintext, _ := json.Marshal(value)
 
-    encrypted_data1 := encryptData(secret_key, plaintext)
-    encrypted_data2 := encryptData(secret_key, plaintext)
+    encrypted_data1, _ := encryptData(secret_key, plaintext)
+    encrypted_data2, _ := encryptData(secret_key, plaintext)
 
     if string(encrypted_data1) == string(encrypted_data2) {
         t.Error("Encryption IV should modify encrypted output")
@@ -75,7 +75,7 @@ func TestGenerateHMAC (t *testing.T) {
     secret_key, value, timestamp := setUp()
     plaintext, _ := json.Marshal(value)
 
-    encrypted_data := encryptData(secret_key, plaintext)
+    encrypted_data, _ := encryptData(secret_key, plaintext)
     hash_mac1 := generateHMAC(secret_key, timestamp, encrypted_data)
     hash_mac2 := generateHMAC(secret_key, timestamp, encrypted_data)
     if !hmac.Equal(hash_mac1, hash_mac2) {
@@ -101,7 +101,7 @@ func TestCompareHMACTimestamp (t *testing.T) {
         t.Error("Timestamps should be different")
     }
 
-    encrypted_data := encryptData(secret_key, plaintext)
+    encrypted_data, _ := encryptData(secret_key, plaintext)
     hash_mac1 := generateHMAC(secret_key, timestamp1, encrypted_data)
     hash_mac2 := generateHMAC(secret_key, timestamp2, encrypted_data)
 
@@ -127,8 +127,8 @@ func TestCompareHMACData (t *testing.T) {
         t.Error("Data should be different")
     }
 
-    encrypted_data1 := encryptData(secret_key, plaintext1)
-    encrypted_data2 := encryptData(secret_key, plaintext2)
+    encrypted_data1, _ := encryptData(secret_key, plaintext1)
+    encrypted_data2, _ := encryptData(secret_key, plaintext2)
 
     hash_mac1 := generateHMAC(secret_key, timestamp, encrypted_data1)
     hash_mac2 := generateHMAC(secret_key, timestamp, encrypted_data2)
