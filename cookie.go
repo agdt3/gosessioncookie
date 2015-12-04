@@ -163,7 +163,7 @@ func DecryptCookieValue(secret_key []byte, cookie_value string, sep string) (str
         return "", errors.New("Returned HMAC does not match")
     }
 
-    // hmac mathces, now decrypt data.
+    // hmac matches, now decrypt data.
     data, err := decryptData(secret_key, encrypted_data)
     if err != nil {
         return "", err
@@ -171,4 +171,3 @@ func DecryptCookieValue(secret_key []byte, cookie_value string, sep string) (str
 
     return string(data), nil
 }
-
