@@ -11,6 +11,7 @@ import (
     "time"
     "errors"
     "strings"
+    "net/http"
     "crypto/aes"
     "crypto/rand"
     "crypto/hmac"
@@ -170,5 +171,35 @@ func DecryptCookieValue(secret_key []byte, cookie_value string, sep string) (str
     }
 
     return string(data), nil
+}
+
+// convencience method to create new encrypted cookie
+// TODO: Resolve optionals
+func NewSessionCookie(key []byte, name string, plaintext_value []byte, domain, path string, expires time.Time, maxage int, secure, httponly bool) (http.Cookie, error){
+    if name == "" || len(plaintext_value) == 0 || len(key) == 0 {
+        return http.Cookie{}, errors.New("name, value and key are mandatory")
+    }
+
+    data, err := EncryptCookieValue(key, plaintext_value, ".")
+    if err != nil {
+        return http.Cookie{}, err
+    }
+    raw := name + "=" + data
+
+    // Provide both Expires and Max-Age
+    newcookie := http.Cookie{
+        Name: name,
+        Value: data,
+        Path: path,
+        Expires: expires,
+        RawExpires: expires.String(),
+        MaxAge: maxage,
+        Secure: secure,
+        HttpOnly: httponly,
+        Raw: raw,
+        Unparsed: []string{raw},
+    }
+
+    return newcookie, nil
 }
 

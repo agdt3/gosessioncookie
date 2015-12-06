@@ -137,3 +137,88 @@ func TestCompareHMACData (t *testing.T) {
         t.Error("Different data should generate different hmac signature")
     }
 }
+
+
+func TestNewCreated (t *testing.T) {
+    secret_key, value, _ := setUp()
+    plaintext, _ := json.Marshal(value)
+    expires := time.Now().Add(time.Duration(time.Hour))
+    maxage := int(expires.Unix())
+
+    _ , err := NewSessionCookie(
+        secret_key,
+        "sess",
+        plaintext,
+        "test.com",
+        "/",
+        expires,
+        maxage,
+        true,
+        true,
+    )
+
+    if err != nil {
+        t.Error("Basic creation should not return an error")
+    }
+}
+
+
+func TestNewErrors (t *testing.T) {
+    secret_key , value, _ := setUp()
+    plaintext, _ := json.Marshal(value)
+    expires := time.Now().Add(time.Duration(time.Hour))
+    maxage := int(expires.Unix())
+
+    // key is empty
+    _, err1 := NewSessionCookie(
+        []byte{},
+        "sess",
+        plaintext,
+        "test.com",
+        "/",
+        expires,
+        maxage,
+        true,
+        true,
+    )
+
+    if err1 == nil {
+        t.Error("Empty key should return error")
+    }
+
+    // name is empty
+    _, err2 := NewSessionCookie(
+        secret_key,
+        "",
+        plaintext,
+        "test.com",
+        "/",
+        expires,
+        maxage,
+        true,
+        true,
+    )
+
+    if err2 == nil {
+        t.Error("Empty name should return error")
+    }
+
+    // plaintext is empty
+    _, err3 := NewSessionCookie(
+        secret_key,
+        "sess",
+        []byte{},
+        "test.com",
+        "/",
+        expires,
+        maxage,
+        true,
+        true,
+    )
+
+    if err3 == nil {
+        t.Error("Empty plaintext should return error")
+    }
+
+}
+
