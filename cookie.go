@@ -21,6 +21,22 @@ import (
 )
 
 
+func GenerateKey(bytesize int) ([]byte, error) {
+    if bytesize < 1 {
+        return []byte{}, errors.New("Keylength must be > 0")
+    }
+
+    key := make([]byte, bytesize)
+    _, err := io.ReadFull(rand.Reader, key)
+
+    if err != nil {
+        return []byte{}, _
+    }
+
+    return key, _
+}
+
+
 func concatValue(hash_mac string, timestamp string, data string, sep string) string {
     if sep == "" {
         sep = "."
@@ -41,6 +57,7 @@ func encryptData(secret_key []byte, data []byte) ([]byte, error)  {
         data = append(data, padding...)
     }
 
+    // aes-128, aes-192, aes-256 determined based on keysize
     block, err := aes.NewCipher(secret_key)
     if err != nil {
         return []byte{}, err
@@ -98,6 +115,8 @@ func generateHMAC(secret_key []byte, timestamp []byte, encrypted_data []byte) []
     message := append(timestamp, encrypted_data...)
 
     // create hash mac
+    // TODO: Implement differet hashing algorithms
+    // i.e. sha256, 384, 512, etc
     hash_mac := hmac.New(sha256.New, secret_key)
     hash_mac.Write(message)
 
@@ -111,6 +130,8 @@ func EncryptCookieValue(secret_key []byte, plaintext_data []byte, sep string) (s
     now := time.Now()
     timestamp := []byte(now.Format(time.UnixDate))
     encoded_timestamp := base64.URLEncoding.EncodeToString(timestamp)
+
+    // check if key is multiple of 16, 24 or 32?
 
     // generate data blob
     encrypted_data, err := encryptData(secret_key, plaintext_data)
