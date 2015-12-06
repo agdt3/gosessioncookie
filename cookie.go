@@ -30,10 +30,10 @@ func GenerateKey(bytesize int) ([]byte, error) {
     _, err := io.ReadFull(rand.Reader, key)
 
     if err != nil {
-        return []byte{}, _
+        return []byte{}, err
     }
 
-    return key, _
+    return key, nil
 }
 
 
