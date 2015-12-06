@@ -120,7 +120,6 @@ func EncryptCookieValue(secret_key []byte, plaintext_data []byte, sep string) (s
 
     encoded_data := base64.URLEncoding.EncodeToString(encrypted_data)
 
-    // generate data blob
     // generate hmac
     hash_mac := generateHMAC(secret_key, timestamp, encrypted_data)
     encoded_hash_mac := base64.URLEncoding.EncodeToString(hash_mac)
@@ -164,7 +163,7 @@ func DecryptCookieValue(secret_key []byte, cookie_value string, sep string) (str
         return "", errors.New("Returned HMAC does not match")
     }
 
-    // hmac mathces, now decrypt data.
+    // hmac matches, now decrypt data.
     data, err := decryptData(secret_key, encrypted_data)
     if err != nil {
         return "", err
